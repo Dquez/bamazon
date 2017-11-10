@@ -90,7 +90,9 @@ function customerSearch() {
     }
   }]).then(function (val) {
     var query = "SELECT product_name, stock_quantity, price FROM products WHERE ?";
-    connection.query(query, {item_id: val.id}, function (err, res) {
+    connection.query(query, {
+      item_id: val.id
+    }, function (err, res) {
       if (res[0].stock_quantity - val.quantity < 0) {
         console.log("Insufficient quantity! \n --------------");
         customerSearch();
@@ -119,239 +121,312 @@ function customerSearch() {
   });
 }
 
+// bamazonManager.js
 
-// make product sales default to INT zero
-// Modify the products table so that there's a product_sales column and modify the bamazonCustomer.js app so that this value is updated with each individual products total revenue from each sale.
-// function productSales() {
-//   var query = "SELECT units, price FROM products WHERE ?"
-//   connection.query(query, {
-//     product_ID: val.id
-//   }, function (err, res) {
-//     var updateQuery = "UPDATE products SET ? WHERE ?";
-//     connection.query(updateQuery, [{
-//       product_sales: product_sales + (val.price * res[0].units)
-//     }, {
-//       product_ID: val.id
-//     }], function (err, res) {});
-//   });
-// }
+function manager() {
 
+  inquirer
+    .prompt({
+      name: "menu",
+      type: "list",
+      message: "What task would you like to perform today?",
+      choices: [
+        "View Products for Sale",
+        "View Low Inventory",
+        "Add to Inventory",
+        "Add New Product",
+        "Come back later"
+      ]
+    })
+    .then(function (answer) {
+      switch (answer.menu) {
+        case "View Products for Sale":
+          productsForSale();
+          break;
 
+        case "View Low Inventory":
+          lowInventory();
+          break;
 
+        case "Add to Inventory":
+          addInventory();
+          break;
+        case "Add New Product":
+          newProduct();
+          break;
+        case "Come back later":
+          console.log("See you soon!");
+          connection.end();
+          break;
+      }
+    });
+}
 
+function productsForSale() {
 
+  // If a manager selects View Products for Sale, the app should list every available item: the item IDs, names, prices, and quantities.
+  console.log("Selecting all products...\n");
+  connection.query("SELECT * FROM products", function (err, res) {
+    if (err) throw err;
+    // Log all results of the SELECT statement
+    for (var i = 0; i < res.length; i++) {
+      console.log("\nID: " + res[i].item_id +
+        "\nProduct: " + res[i].product_name +
+        "\nDepartment: " + res[i].department +
+        "\nPrice: " + res[i].stock_quantity + "\n-------------");
+    }
+    console.log("Taking you back to the home screen...");
+    manager();
+  });
+}
+// 
+function lowInventory() {
+  var query = "SELECT stock_quantity, product_name FROM products WHERE stock_quantity < 5 ORDER BY stock_quantity";
+  connection.query(query, function (err, res) {
+    // console.log(res);
+    for (var i = 0; i < res.length; i++) {
+      console.log("Product name: " + res[i].product_name + "\nUnits left: " + res[i].stock_quantity + "\n-------------");
+    }
+    // console.log("---------------");
+    inquirer
+      .prompt({
+        name: "refill",
+        type: "confirm",
+        message: "Would you like to refill stock?"
+      })
+      .then(function (answer) {
+        if (answer.refill) {
+          addInventory();
 
+        } else {
+          connection.end();
+        }
 
-
-
-
-
-
-// // bamazonManager.js
-
-// function manager() {
-
-//   inquirer
-//     .prompt({
-//       name: "menu",
-//       type: "list",
-//       message: "What task would you like to perform today?",
-//       choices: [
-//         "View Products for Sale",
-//         "View Low Inventory",
-//         "Add to Inventory",
-//         "Add New Product",
-//         "Come back later"
-//       ]
-//     })
-//     .then(function (answer) {
-//       switch (answer.user) {
-//         case "View Products for Sale":
-//           productsForSale();
-//           break;
-
-//         case "View Low Inventory":
-//           lowInventory();
-//           break;
-
-//         case "Add to Inventory":
-//           addInventory();
-//           break;
-//         case "Add New Product":
-//           newProduct();
-//           break;
-//         case "Come back later":
-//           console.log("See you soon!");
-//           connection.end();
-//           break;
-//       }
-//     });
-// }
-
-// function productsForSale(); {
-
-//   // If a manager selects View Products for Sale, the app should list every available item: the item IDs, names, prices, and quantities.
-//   console.log("Selecting all products...\n");
-//   connection.query("SELECT * FROM products", function (err, res) {
-//     if (err) throw err;
-//     // Log all results of the SELECT statement
-//     console.log(res);
-//     console.log("Taking you back to the home screen...");
-//     //     Might want to prettify the result
-//     manager();
-//   });
-
-
-// }
-
-
+      });
+  });
+}
 
 
 
+function addInventory() {
+  inquirer.prompt([{
 
-// function lowInventory(); {
+    name: "id",
+    type: "input",
+    message: "What's the ID of the item you'd like to add?",
+    validate: function (value) {
+      if ((isNaN(value) === false) && (value > 0)) {
+        return true;
+      }
+      return false
+    }
+  },
+    {
+      name: "units",
+      type: "input",
+      message: "How many units would you like add?",
+      validate: function (value) {
+        if ((isNaN(value) === false) && (value > 0)) {
+          return true;
+        }
+        return false
+      }
+    }
+  ]).then(function (val) {
+    var newStock = parseInt(val.units);
+  //  WHERE EXISTS (SELECT item_id FROM products WHERE condition  ADD so that if a user enters an ID outside of what exists, it returns null
+    var updateQuery = "UPDATE products SET stock_quantity = stock_quantity + " + newStock + " WHERE ?";
+    // var newStock = parseInt(stock_quantity) + parseInt(val.units)
+    connection.query(updateQuery, {item_id: val.id}, function (err, res) {
+      if (err) {
+        console.log("Please make sure you used the correct name");
+        addInventory();
+      }
+      console.log("Your " + val.id + " stock has been updated.\n-------------");
+      login();
+    });
+  });
+}
 
-//   var query = "SELECT product_name, units FROM products GROUP BY units HAVING count(*) < 5";
-//   connection.query(query, function (err, res) {
-//     for (var i = 0; i < res.length; i++) {
-//       console.log("Product name: " + res[i].product_name + "\nUnits left: " + res[i].unit + "\n --------------");
-//     }
-//     console.log("Taking you back to the home screen...");
-//     manager();
-//   });
+//       function newProduct(); {
 
-//   function addInventory(); {
+//         inquirer.prompt([{
+//             name: name,
+//             type: input,
+//             message: "Please enter product name?"
+//           },
+//           {
 
+//             name: department,
+//             type: input,
+//             message: "Please enter department name?"
+//           },
 
-//     // If a manager selects Add to Inventory, your app should display a prompt that will let the manager "add more" of any item currently in the store.
-
-//     inquirer.prompt([{
-
-//         name: name,
-//         type: input,
-//         message: "What is name of the item you would like to add to?"
-//       },
-//       {
-//         name: units,
-//         type: input,
-//         message: "How many units would you like add?",
-//         validate: function (value) {
-//           if (isNaN === false) {
-//             return true;
+//           {
+//             name: quanitity,
+//             type: input,
+//             message: "Please enter the product quantity?",
+//             validate: function (value) {
+//               if (isNaN === false) {
+//                 return true;
+//               }
+//               return false
+//             }
+//           },
+//           {
+//             name: price,
+//             type: input,
+//             message: "Please enter product price?",
+//             validate: function (value) {
+//               if (isNaN === false) {
+//                 return true;
+//               }
+//               return false
+//             }
 //           }
-//           return false
-//         }
-//       }
-//     ]).then(function (val) {
+//         ]).then(function (val) {
 
 
-//       var updateQuery = "UPDATE products SET ? WHERE ?";
-//       connection.query(updateQuery, [{
-//         units: units + val.units;
-//       }, {
-//         prdouct_name: val.name
-//       }], function (err, res) {
-//         // UPDATE t1 SET col1 = col1 + 1;
-//         console.log("Your "
-//           res[0].prdouct_name + " stock is now up to" + parseInt(res[0].units + "\n --------------"));
-//         login();
-//       });
-//     });
-//   }
-
-//   function newProduct(); {
-
-//     inquirer.prompt([{
-//         name: name,
-//         type: input,
-//         message: "Please enter product name?"
-//       },
-//       {
-
-//         name: department,
-//         type: input,
-//         message: "Please enter department name?"
-//       },
-
-//       {
-//         name: quanitity,
-//         type: input,
-//         message: "Please enter the product quantity?",
-//         validate: function (value) {
-//           if (isNaN === false) {
-//             return true;
-//           }
-//           return false
-//         }
-//       },
-//       {
-//         name: price,
-//         type: input,
-//         message: "Please enter product price?",
-//         validate: function (value) {
-//           if (isNaN === false) {
-//             return true;
-//           }
-//           return false
-//         }
-//       }
-//     ]).then(function (val) {
-
-
-//       var query = "INSERT INTO products SET ?";
-//       console.log("Inserting a new product...\n");
-//       connection.query(query, "INSERT INTO products SET ?", {
-//           flavor: val.name,
-//           department: val.department,
-//           quantity: val.quantity,
-//           price: val.price
-//         },
-//         function (err, res) {
-//           console.log(res.affectedRows + " product inserted!\n");
-//           // Call updateProduct AFTER the INSERT completes
-//           manager();
+//           var query = "INSERT INTO products SET ?";
+//           console.log("Inserting a new product...\n");
+//           connection.query(query, "INSERT INTO products SET ?", {
+//               product_name: val.name,
+//               department: val.department,
+//               stock_quanity: val.quantity,
+//               price: val.price
+//             },
+//             function (err, res) {
+//               console.log(res.affectedRows + " product inserted!\n");
+//               // Call updateProduct AFTER the INSERT completes
+//               manager();
+//             });
 //         });
-//     });
 
-//   }
-
-
-
-
-// Create a new MySQL table called departments. Your table should include the following columns:
-
-// department_id
-
-// department_name
-
-// over_head_costs (A dummy number you set for each department)
+//       }
 
 
 
 
 
-// Modify your bamazonCustomer.js app so that when a customer purchases anything from the store, the price of the product multiplied by the quantity purchased is added to the product's product_sales column.
+//       // Create a new MySQL table called departments. Your table should include the following columns:
 
-// Make sure your app still updates the inventory listed in the products column.
-// Create another Node app called bamazonSupervisor.js. Running this application will list a set of menu options:
+//       // department_id
 
-// View Product Sales by Department
+//       // department_name
 
-// Create New Department
+//       // over_head_costs (A dummy number you set for each department)
 
-// When a supervisor selects View Product Sales by Department, the app should display a summarized table in their terminal/bash window. Use the table below as a guide.
+//       // Modify your bamazonCustomer.js app so that when a customer purchases anything from the store, the price of the product multiplied by the quantity purchased is added to the product's product_sales column.
+//       // make product sales default to INT zero
+//       // Modify the products table so that there's a product_sales column and modify the bamazonCustomer.js app so that this value is updated with each individual products total revenue from each sale.
+//       function productSales() {
+//         var query = "SELECT units, price FROM products WHERE ?";
+//         connection.query(query, {
+//           product_ID: val.id
+//         }, function (err, res) {
+//           var updateQuery = "UPDATE products SET ? WHERE ?";
+//           var newSales = val.units * res[0].price;
+//           connection.query(updateQuery, [{
+//               product_sales: product_sales + newSales
+//             }, {
+//               product_ID: val.id
+//             }],
+//             function (error, result) {}
+//           );
+//         });
+//       }
 
-// department_id	department_name	over_head_costs	product_sales	total_profit
-// 01	Electronics	10000	20000	10000
-// 02	Clothing	60000	100000	40000
-// The total_profit column should be calculated on the fly using the difference between over_head_costs and product_sales. total_profit should not be stored in any database. You should use a custom alias.
 
-// If you can't get the table to display properly after a few hours, then feel free to go back and just add total_profit to the departments table.
+//       // Create another Node app called bamazonSupervisor.js. Running this application will list a set of menu options:
 
-// Hint: You may need to look into aliases in MySQL.
+//       // bamazonSupervisor.js
+//       // View Product Sales by Department
 
-// Hint: You may need to look into GROUP BYs.
+//       // Create New Department
+//       function supervisor() {
 
-// Hint: You may need to look into JOINS.
+//         inquirer
+//           .prompt({
+//             name: "menu",
+//             type: "list",
+//             message: "What task would you like to perform today?",
+//             choices: [
+//               "View Products for Sale",
+//               "View Low Inventory",
+//               "Come back later"
+//             ]
+//           })
+//           .then(function (answer) {
+//             switch (answer.user) {
+//               case "View product sales by department":
+//                 productSalesByDept();
+//                 break;
+//               case "Create a new department":
+//                 lowInventory();
+//                 break;
+//               case "Come back later":
+//                 console.log("See you soon!");
+//                 connection.end();
+//                 break;
+//             }
+//           });
+//       }
 
-// HINT: There may be an NPM package that can log the table to the console. What's is it? Good question :)
+
+
+//       function productSalesByDept() {
+
+
+//         // var query = "SELECT units, price FROM products WHERE ?";
+//         // connection.query(query, { product_ID: val.id }, function(err, res) {
+//         //   var updateQuery = "UPDATE products SET ? WHERE ?";
+//         //   var newSales = val.units * res[0].price;
+//         //   connection.query( updateQuery, [{ product_sales: product_sales + newSales }, { product_ID: val.id }],
+//         //     function(error, result) {}
+//         //   );
+//         // });
+
+//         var query = "SELECT departments.department_name,	departments.over_head_costs, products.product_sales as total_sales ";
+//         query += "FROM departments INNER JOIN products ON departments.department_name = products.department_name AS Supervisor_View ;";
+//         query += "ORDER BY products.product_sale ALTER TABLE Supervisor_View ADD total_profit ";
+//         query += "INSERT INTO Supervisor_View(total_profit, total_sales) SET (total_profit = departments.over_head_costs - products.product_sales AND  SUM(product_sales) FROM products GROUP BY department_name)  ";
+//         // SELECT SUM(product_sales) FROM products GROUP BY department_name 
+//         // INSERT INTO `test`.`product` ( `p1`, `p2`, `p3`) 
+//         // SELECT sum(p1), sum(p2), sum(p3) 
+//         // FROM `test`.`product`;
+//         // var totalProfit = "over_head_costs - product_sales";
+//         //   NEED TO FIND SUM(product_sales) for each department
+//         // department_id	department_name	over_head_costs	product_sales	total_profit
+//         connection.query(query, function (err, res) {
+//           console.log(res);
+
+//           supervisor();
+//         });
+//         //   SELECT Orders.OrderID, Customers.CustomerName
+//         // FROM Orders
+//         // INNER JOIN Customers ON Orders.CustomerID = Customers.CustomerID;
+//       }
+
+
+
+
+//       addInventory();
+
+//       // When a supervisor selects View Product Sales by Department, the app should display a summarized table in their terminal/bash window. Use the table below as a guide.
+
+//       // department_id	department_name	over_head_costs	product_sales	total_profit
+//       // 01	Electronics	10000	20000	10000
+//       // 02	Clothing	60000	100000	40000
+//       // The total_profit column should be calculated on the fly using the difference between over_head_costs and product_sales. total_profit should not be stored in any database. You should use a custom alias.
+
+//       // If you can't get the table to display properly after a few hours, then feel free to go back and just add total_profit to the departments table.
+
+//       // Hint: You may need to look into aliases in MySQL.
+
+//       // Hint: You may need to look into GROUP BYs.
+
+//       // Hint: You may need to look into JOINS.
+
+//       // HINT: There may be an NPM package that can log the table to the console. What's is it? Good question :)
+
+//       // https://www.npmjs.com/package/cli-table
