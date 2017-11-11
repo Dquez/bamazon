@@ -101,10 +101,8 @@ function customerSearch() {
             console.log("There are " + val.quantity + " " + res[0].product_name + "s coming right up!");
           }
           var newUnits = parseInt(res[0].stock_quantity) - parseInt(val.quantity);
-          // console.log(newUnits);
           var total = parseInt(val.quantity) * parseInt(res[0].price);
           var updateQuery = "UPDATE products SET product_sales = product_sales + " + total + ", ? WHERE ?";
-          console.log(updateQuery);
           connection.query(updateQuery, [{
             stock_quantity: newUnits
           }, {
@@ -251,17 +249,10 @@ function addInventory() {
       connection.query(updateQuery, {
         product_name: val.name
       }, function (err, res) {
-        if (err) {
-          console.log("Please make sure you used the correct name");
-          addInventory();
-        }
+        if (err) throw err
         console.log("Your " + val.name + " stock has been updated.\n-------------");
         login();
       });
-
-      // var newStock =;
-      //  WHERE EXISTS (SELECT item_id FROM products WHERE condition  ADD so that if a user enters an ID outside of what exists, it returns null
-
     });
   });
 }
@@ -274,12 +265,10 @@ function newProduct() {
       message: "Please enter product name?"
     },
     {
-
       name: "department",
       type: "input",
       message: "Please enter department name?"
     },
-
     {
       name: "quantity",
       type: "input",
@@ -317,84 +306,75 @@ function newProduct() {
         manager();
       });
   });
-
 }
-
-//       // Modify your bamazonCustomer.js app so that when a customer purchases anything from the store, the price of the product multiplied by the quantity purchased is added to the product's product_sales column.
-//       // make product sales default to INT zero
-//       // Modify the products table so that there's a product_sales column and modify the bamazonCustomer.js app so that this value is updated with each individual products total revenue from each sale.
-
-
-
-//       // Create another Node app called bamazonSupervisor.js. Running this application will list a set of menu options:
 
 //       // bamazonSupervisor.js
 //       // View Product Sales by Department
 
 //       // Create New Department
-//       function supervisor() {
-
-//         inquirer
-//           .prompt({
-//             name: "menu",
-//             type: "list",
-//             message: "What task would you like to perform today?",
-//             choices: [
-//               "View Products for Sale",
-//               "View Low Inventory",
-//               "Come back later"
-//             ]
-//           })
-//           .then(function (answer) {
-//             switch (answer.user) {
-//               case "View product sales by department":
-//                 productSalesByDept();
-//                 break;
-//               case "Create a new department":
-//                 lowInventory();
-//                 break;
-//               case "Come back later":
-//                 console.log("See you soon!");
-//                 connection.end();
-//                 break;
-//             }
-//           });
-//       }
-
-
-
-//       function productSalesByDept() {
+      function supervisor() {
+        inquirer
+          .prompt({
+            name: "menu",
+            type: "list",
+            message: "What task would you like to perform today?",
+            choices: [
+              "View product sales by department",
+              "Create new department",
+              "Come back later"
+            ]
+          })
+          .then(function (answer) {
+            switch (answer.menu) {
+              case "View product sales by department":
+                productSalesByDept();
+               
+                break;
+              case "Create a new department":
+              console.log("depts");
+                // lowInventory();
+                break;
+              case "Come back later":
+                console.log("See you soon!");
+                break;
+            }
+            connection.end();
+          });
+      }
 
 
-//         // var query = "SELECT units, price FROM products WHERE ?";
-//         // connection.query(query, { product_ID: val.id }, function(err, res) {
-//         //   var updateQuery = "UPDATE products SET ? WHERE ?";
-//         //   var newSales = val.units * res[0].price;
-//         //   connection.query( updateQuery, [{ product_sales: product_sales + newSales }, { product_ID: val.id }],
-//         //     function(error, result) {}
-//         //   );
-//         // });
 
-//         var query = "SELECT departments.department_name,	departments.over_head_costs, products.product_sales as total_sales ";
-//         query += "FROM departments INNER JOIN products ON departments.department_name = products.department_name AS Supervisor_View ;";
-//         query += "ORDER BY products.product_sale ALTER TABLE Supervisor_View ADD total_profit ";
-//         query += "INSERT INTO Supervisor_View(total_profit, total_sales) SET (total_profit = departments.over_head_costs - products.product_sales AND  SUM(product_sales) FROM products GROUP BY department_name)  ";
-//         // SELECT SUM(product_sales) FROM products GROUP BY department_name 
-//         // INSERT INTO `test`.`product` ( `p1`, `p2`, `p3`) 
-//         // SELECT sum(p1), sum(p2), sum(p3) 
-//         // FROM `test`.`product`;
-//         // var totalProfit = "over_head_costs - product_sales";
-//         //   NEED TO FIND SUM(product_sales) for each department
-//         // department_id	department_name	over_head_costs	product_sales	total_profit
-//         connection.query(query, function (err, res) {
-//           console.log(res);
+      function productSalesByDept() {
 
-//           supervisor();
-//         });
-//         //   SELECT Orders.OrderID, Customers.CustomerName
-//         // FROM Orders
-//         // INNER JOIN Customers ON Orders.CustomerID = Customers.CustomerID;
-//       }
+        var totalSales = 0;
+        // var query = "SELECT department_name, SUM(product_sales) as 'product_sales' FROM products GROUP BY department_name";
+        // connection.query(query, function(err, res) {
+        //  console.log(res);
+        // });
+        // department_id	department_name	over_head_costs	product_sales	total_profit
+        // SELECT Customers.CustomerName, Orders.OrderID
+        // FROM Customers
+        // LEFT JOIN Orders
+        // ON Customers.CustomerID=Orders.CustomerID
+        // ORDER BY Customers.CustomerName;
+        var query = "SELECT departments.department_id, departments.department_name, departments.over_head_costs, products.product_name ";
+        query += "FROM departments LEFT JOIN products ON departments.department_name = products.department_name ";
+        // query += "ORDER BY products.product_sales" ; 
+        // ALTER TABLE Supervisor_View ADD total_profit ";
+        // query += "INSERT INTO Supervisor_View(total_profit, total_sales) SET (total_profit = departments.over_head_costs - products.product_sales, SUM(product_sales) FROM products GROUP BY department_name)  ";
+
+        // var totalProfit = "over_head_costs - product_sales";
+        // department_id	department_name	over_head_costs	product_sales	total_profit
+        connection.query(query, function (err, res) {
+          // if (err) throw err;
+          console.log(res);
+
+          supervisor();
+        });
+        //   SELECT Orders.OrderID, Customers.CustomerName
+        // FROM Orders
+        // INNER JOIN Customers ON Orders.CustomerID = Customers.CustomerID;
+      }
 
 
 
