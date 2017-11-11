@@ -209,100 +209,130 @@ function lowInventory() {
 
 
 function addInventory() {
-  inquirer.prompt([{
+  connection.query("Select product_name FROM products", function (err, res) {
+    console.log("Products available: ");
 
-    name: "id",
-    type: "input",
-    message: "What's the ID of the item you'd like to add?",
-    validate: function (value) {
-      if ((isNaN(value) === false) && (value > 0)) {
-        return true;
-      }
-      return false
+    var productArr = [];
+ 
+    for (var i = 0; i < res.length; i++) {
+      productArr.push(res[i].product_name);
     }
-  },
-    {
-      name: "units",
+
+
+    
+    productArr.forEach(function(product) {
+        console.log(product);
+    });
+    
+
+    inquirer.prompt([{
+        name: "name",
+        type: "input",
+        message: "What's the name of the item you'd like to add?",
+        validate: function (product) {
+          if (productArr.indexOf(product) < 0) {
+            console.log("\nPlease make sure you used the correct name!");
+            return false;
+          }
+          return true;
+        }
+      },
+      {
+        name: "units",
+        type: "input",
+        message: "How many units would you like add?",
+        validate: function (value) {
+          if ((isNaN(value) === false) && (value > 0)) {
+            return true;
+          }
+          return false
+        }
+      }
+    ]).then(function (val) {
+        var updateQuery = "UPDATE products SET stock_quantity = stock_quantity + " +  parseInt(val.units) + " WHERE ?";
+        // var newStock = parseInt(stock_quantity) + parseInt(val.units)
+        connection.query(updateQuery, {
+          product_name: val.name
+        }, function (err, res) {
+          if (err) {
+            console.log("Please make sure you used the correct name");
+            addInventory();
+          }
+          console.log("Your " + val.name + " stock has been updated.\n-------------");
+          login();
+        });
+      
+      // var newStock =;
+      //  WHERE EXISTS (SELECT item_id FROM products WHERE condition  ADD so that if a user enters an ID outside of what exists, it returns null
+
+    });
+  });
+}
+
+function newProduct() {
+
+  inquirer.prompt([{
+      name: "name",
       type: "input",
-      message: "How many units would you like add?",
+      message: "Please enter product name?"
+    },
+    {
+
+      name: "department",
+      type: "input",
+      message: "Please enter department name?"
+    },
+
+    {
+      name: "quantity",
+      type: "input",
+      message: "Please enter the product quantity?",
       validate: function (value) {
-        if ((isNaN(value) === false) && (value > 0)) {
+        if (isNaN(value) === false) {
+          return true;
+        }
+        return false
+      }
+    },
+    {
+      name: "price",
+      type: "input",
+      message: "Please enter product price?",
+      validate: function (value) {
+        if (isNaN(value) === false) {
           return true;
         }
         return false
       }
     }
-  ]).then(function (val) {
-    var newStock = parseInt(val.units);
-  //  WHERE EXISTS (SELECT item_id FROM products WHERE condition  ADD so that if a user enters an ID outside of what exists, it returns null
-    var updateQuery = "UPDATE products SET stock_quantity = stock_quantity + " + newStock + " WHERE ?";
-    // var newStock = parseInt(stock_quantity) + parseInt(val.units)
-    connection.query(updateQuery, {item_id: val.id}, function (err, res) {
-      if (err) {
-        console.log("Please make sure you used the correct name");
-        addInventory();
-      }
-      console.log("Your " + val.id + " stock has been updated.\n-------------");
-      login();
-    });
+  ]).then(function(val) {
+
+    // "INSERT INTO auctions SET ?",
+    // {
+    //   item_name: answer.item,
+    //   category: answer.category,
+    //   starting_bid: answer.startingBid,
+    //   highest_bid: answer.startingBid
+    // },
+    // function(err) {
+    var query = "INSERT INTO products SET ?";
+    console.log("Inserting new product...\n");
+    connection.query(query, {
+        product_name: val.name,
+        department_name: val.department,
+        price: val.price,
+        stock_quantity: val.quantity
+      },
+      function (err) {
+
+        if (err) throw err;
+       console.log("Success!");
+        // Call updateProduct AFTER the INSERT completes
+        manager();
+      });
   });
+
 }
-
-//       function newProduct(); {
-
-//         inquirer.prompt([{
-//             name: name,
-//             type: input,
-//             message: "Please enter product name?"
-//           },
-//           {
-
-//             name: department,
-//             type: input,
-//             message: "Please enter department name?"
-//           },
-
-//           {
-//             name: quanitity,
-//             type: input,
-//             message: "Please enter the product quantity?",
-//             validate: function (value) {
-//               if (isNaN === false) {
-//                 return true;
-//               }
-//               return false
-//             }
-//           },
-//           {
-//             name: price,
-//             type: input,
-//             message: "Please enter product price?",
-//             validate: function (value) {
-//               if (isNaN === false) {
-//                 return true;
-//               }
-//               return false
-//             }
-//           }
-//         ]).then(function (val) {
-
-
-//           var query = "INSERT INTO products SET ?";
-//           console.log("Inserting a new product...\n");
-//           connection.query(query, "INSERT INTO products SET ?", {
-//               product_name: val.name,
-//               department: val.department,
-//               stock_quanity: val.quantity,
-//               price: val.price
-//             },
-//             function (err, res) {
-//               console.log(res.affectedRows + " product inserted!\n");
-//               // Call updateProduct AFTER the INSERT completes
-//               manager();
-//             });
-//         });
-
-//       }
 
 
 
