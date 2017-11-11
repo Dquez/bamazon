@@ -17,14 +17,6 @@ connection.connect(function (err) {
   // connection.end();
 });
 
-
-// connection.query("Select * from products", function (err, res) {
-//   for (var i =0; i < res.length; i++ ) {
-//       console.log("\nProduct: " + res[i].product_name + "\nDeptartment: " + res[i].department_name + "\nPrice: " + res[i].price + "\nStock: " + res[i].stock_quantity + "\n-----------------");
-//   }
-//   connection.end();
-// });
-
 //  CLI Module
 
 function login() {
@@ -60,63 +52,71 @@ function login() {
 
 
 //  Customer Module
-
-
-
-
 function customerSearch() {
+  connection.query("Select product_name FROM products", function (err, res) {
+    console.log("Products available: ");
 
+    var productArr = [];
 
-  inquirer.prompt([{
-
-    name: "id",
-    type: "input",
-    message: "What is the ID of the item you would like to purchase?",
-    validate: function (value) {
-      if (isNaN(value) === false) {
-        return true;
-      }
-      return false
+    for (var i = 0; i < res.length; i++) {
+      productArr.push(res[i].product_name);
     }
-  }, {
-    name: "quantity",
-    type: "input",
-    message: "How many units would you like to purchase?",
-    validate: function (value) {
-      if (isNaN(value) === false) {
-        return true;
-      }
-      return false
-    }
-  }]).then(function (val) {
-    var query = "SELECT product_name, stock_quantity, price FROM products WHERE ?";
-    connection.query(query, {
-      item_id: val.id
-    }, function (err, res) {
-      if (res[0].stock_quantity - val.quantity < 0) {
-        console.log("Insufficient quantity! \n --------------");
-        customerSearch();
-      } else {
-        if (val.quantity == 1) {
-          console.log("There is " + val.quantity + " " + res[0].product_name + " coming right up!");
-        } else {
-          console.log("There are " + val.quantity + " " + res[0].product_name + "s coming right up!");
+    productArr.forEach(function (product) {
+      console.log(product);
+    });
+    inquirer.prompt([{
+      name: "name",
+      type: "input",
+      message: "What is the name of the item you would like to purchase?",
+      validate: function (product) {
+        if (productArr.indexOf(product) < 0) {
+          console.log("\nPlease make sure you used the correct name!");
+          return false;
         }
-        var newUnits = parseInt(res[0].stock_quantity) - parseInt(val.quantity);
-        //might need to make new units global or within the scope of the .then function
-        var total = parseInt(val.quantity) * parseInt(res[0].price);
-        var updateQuery = "UPDATE products SET ? WHERE ?";
-        connection.query(updateQuery, [{
-          stock_quantity: newUnits
-        }, {
-          item_id: val.id
-        }], function (error, result) {
-          console.log("Your total will be $" + total + ".");
-          console.log("Thank you for shopping with us! \n --------------");
-          // productSales();
-          login();
-        });
+        return true;
       }
+    }, {
+      name: "quantity",
+      type: "input",
+      message: "How many units would you like to purchase?",
+      validate: function (value) {
+        if ((isNaN(value) === false) && (value > 0)) {
+          return true;
+        }
+        return false
+      }
+    }]).then(function (val) {
+      var query = "SELECT product_name, stock_quantity, price FROM products WHERE ?";
+      connection.query(query, {
+        product_name: val.name
+      }, function (err, res) {
+        if (res[0].stock_quantity - val.quantity < 0) {
+          console.log("Insufficient quantity! \n --------------\nThere are only " + res[0].stock_quantity + " of those left.");
+
+          customerSearch();
+        } else {
+          if (val.quantity == 1) {
+            console.log("There is " + val.quantity + " " + res[0].product_name + " coming right up!");
+          } else {
+            console.log("There are " + val.quantity + " " + res[0].product_name + "s coming right up!");
+          }
+          var newUnits = parseInt(res[0].stock_quantity) - parseInt(val.quantity);
+          // console.log(newUnits);
+          var total = parseInt(val.quantity) * parseInt(res[0].price);
+          var updateQuery = "UPDATE products SET product_sales = product_sales + " + total + ", ? WHERE ?";
+          console.log(updateQuery);
+          connection.query(updateQuery, [{
+            stock_quantity: newUnits
+          }, {
+            product_name: val.name
+          }], function (error, result) {
+            console.log("Your total will be $" + total + ".");
+            console.log("Thank you for shopping with us! \n --------------");
+            login();
+          });
+        }
+      });
+
     });
   });
 }
@@ -172,7 +172,7 @@ function productsForSale() {
     for (var i = 0; i < res.length; i++) {
       console.log("\nID: " + res[i].item_id +
         "\nProduct: " + res[i].product_name +
-        "\nDepartment: " + res[i].department +
+        "\nDepartment: " + res[i].department_name +
         "\nPrice: " + res[i].stock_quantity + "\n-------------");
     }
     console.log("Taking you back to the home screen...");
@@ -213,17 +213,14 @@ function addInventory() {
     console.log("Products available: ");
 
     var productArr = [];
- 
+
     for (var i = 0; i < res.length; i++) {
       productArr.push(res[i].product_name);
     }
-
-
-    
-    productArr.forEach(function(product) {
-        console.log(product);
+    productArr.forEach(function (product) {
+      console.log(product);
     });
-    
+
 
     inquirer.prompt([{
         name: "name",
@@ -249,19 +246,19 @@ function addInventory() {
         }
       }
     ]).then(function (val) {
-        var updateQuery = "UPDATE products SET stock_quantity = stock_quantity + " +  parseInt(val.units) + " WHERE ?";
-        // var newStock = parseInt(stock_quantity) + parseInt(val.units)
-        connection.query(updateQuery, {
-          product_name: val.name
-        }, function (err, res) {
-          if (err) {
-            console.log("Please make sure you used the correct name");
-            addInventory();
-          }
-          console.log("Your " + val.name + " stock has been updated.\n-------------");
-          login();
-        });
-      
+      var updateQuery = "UPDATE products SET stock_quantity = stock_quantity + " + parseInt(val.units) + " WHERE ?";
+      // var newStock = parseInt(stock_quantity) + parseInt(val.units)
+      connection.query(updateQuery, {
+        product_name: val.name
+      }, function (err, res) {
+        if (err) {
+          console.log("Please make sure you used the correct name");
+          addInventory();
+        }
+        console.log("Your " + val.name + " stock has been updated.\n-------------");
+        login();
+      });
+
       // var newStock =;
       //  WHERE EXISTS (SELECT item_id FROM products WHERE condition  ADD so that if a user enters an ID outside of what exists, it returns null
 
@@ -288,7 +285,7 @@ function newProduct() {
       type: "input",
       message: "Please enter the product quantity?",
       validate: function (value) {
-        if (isNaN(value) === false) {
+        if ((isNaN(value) === false) && (value > 0)) {
           return true;
         }
         return false
@@ -299,22 +296,13 @@ function newProduct() {
       type: "input",
       message: "Please enter product price?",
       validate: function (value) {
-        if (isNaN(value) === false) {
+        if ((isNaN(value) === false) && (value > 0)) {
           return true;
         }
         return false
       }
     }
-  ]).then(function(val) {
-
-    // "INSERT INTO auctions SET ?",
-    // {
-    //   item_name: answer.item,
-    //   category: answer.category,
-    //   starting_bid: answer.startingBid,
-    //   highest_bid: answer.startingBid
-    // },
-    // function(err) {
+  ]).then(function (val) {
     var query = "INSERT INTO products SET ?";
     console.log("Inserting new product...\n");
     connection.query(query, {
@@ -324,47 +312,18 @@ function newProduct() {
         stock_quantity: val.quantity
       },
       function (err) {
-
         if (err) throw err;
-       console.log("Success!");
-        // Call updateProduct AFTER the INSERT completes
+        console.log("Success!");
         manager();
       });
   });
 
 }
 
-
-
-
-
-//       // Create a new MySQL table called departments. Your table should include the following columns:
-
-//       // department_id
-
-//       // department_name
-
-//       // over_head_costs (A dummy number you set for each department)
-
 //       // Modify your bamazonCustomer.js app so that when a customer purchases anything from the store, the price of the product multiplied by the quantity purchased is added to the product's product_sales column.
 //       // make product sales default to INT zero
 //       // Modify the products table so that there's a product_sales column and modify the bamazonCustomer.js app so that this value is updated with each individual products total revenue from each sale.
-//       function productSales() {
-//         var query = "SELECT units, price FROM products WHERE ?";
-//         connection.query(query, {
-//           product_ID: val.id
-//         }, function (err, res) {
-//           var updateQuery = "UPDATE products SET ? WHERE ?";
-//           var newSales = val.units * res[0].price;
-//           connection.query(updateQuery, [{
-//               product_sales: product_sales + newSales
-//             }, {
-//               product_ID: val.id
-//             }],
-//             function (error, result) {}
-//           );
-//         });
-//       }
+
 
 
 //       // Create another Node app called bamazonSupervisor.js. Running this application will list a set of menu options:
