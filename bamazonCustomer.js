@@ -347,16 +347,19 @@ function newProduct() {
       function productSalesByDept() {
 
         var totalSales = 0;
-        // var query = "SELECT department_name, SUM(product_sales) as 'product_sales' FROM products GROUP BY department_name";
-        // connection.query(query, function(err, res) {
-        //  console.log(res);
-        // });
-        // department_id	department_name	over_head_costs	product_sales	total_profit
-        // SELECT Customers.CustomerName, Orders.OrderID
-        // FROM Customers
-        // LEFT JOIN Orders
-        // ON Customers.CustomerID=Orders.CustomerID
-        // ORDER BY Customers.CustomerName;
+
+// SELECT departments.department_id,  departments.department_name, departments.over_head_costs
+// FROM departments INNER JOIN  (
+//          SELECT
+//               department_name, SUM(product_sales) AS product_sales, 
+//          FROM
+//              products
+//          GROUP BY
+//            department_name
+//     )
+// as supervisor_view
+// ON departments.department_name = supervisor_view.department_name;
+
         var query = "SELECT departments.department_id, departments.department_name, departments.over_head_costs, products.product_name ";
         query += "FROM departments LEFT JOIN products ON departments.department_name = products.department_name ";
         // query += "ORDER BY products.product_sales" ; 
