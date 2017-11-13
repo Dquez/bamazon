@@ -312,93 +312,119 @@ function newProduct() {
 //       // View Product Sales by Department
 
 //       // Create New Department
-      function supervisor() {
-        inquirer
-          .prompt({
-            name: "menu",
-            type: "list",
-            message: "What task would you like to perform today?",
-            choices: [
-              "View product sales by department",
-              "Create new department",
-              "Come back later"
-            ]
-          })
-          .then(function (answer) {
-            switch (answer.menu) {
-              case "View product sales by department":
-                productSalesByDept();
-               
-                break;
-              case "Create a new department":
-              console.log("depts");
-                // lowInventory();
-                break;
-              case "Come back later":
-                console.log("See you soon!");
-                break;
-            }
-            connection.end();
-          });
+
+var Table = require('cli-table');
+
+
+function supervisor() {
+  inquirer
+    .prompt({
+      name: "menu",
+      type: "list",
+      message: "What task would you like to perform today?",
+      choices: [
+        "View product sales by department",
+        "Create new department",
+        "Come back later"
+      ]
+    })
+    .then(function (answer) {
+      switch (answer.menu) {
+        case "View product sales by department":
+          productSalesByDept();
+
+          break;
+        case "Create a new department":
+          console.log("depts");
+          newDepartment();
+          break;
+        case "Come back later":
+          console.log("See you soon!");
+          break;
       }
+      connection.end();
+    });
+}
 
 
 
-      function productSalesByDept() {
+function productSalesByDept() {
 
-        var totalSales = 0;
+  var totalSales = 0;
+  var query = "SELECT departments.department_id, departments.department_name, departments.over_head_costs, ";
+  query += "SUM(products.product_sales) as 'product_sales', SUM(products.product_sales-departments.over_head_costs) total_profit ";
+  query += "FROM products INNER JOIN departments USING (department_name) group by departments.department_id, ";
+  query += " departments.over_head_costs, products.department_name";
+  connection.query(query, function (err, res) {
+    // if (err) throw err;
+    console.log(res);
+    // instantiate 
+    var table = new Table({
+      head: ['department_id', 'department_name', 'over_head_costs', 'product_sales', 'total_profit'],
+      colWidths: [20, 20, 20, 20, 20]
+    });
 
-// SELECT departments.department_id,  departments.department_name, departments.over_head_costs
-// FROM departments INNER JOIN  (
-//          SELECT
-//               department_name, SUM(product_sales) AS product_sales, 
-//          FROM
-//              products
-//          GROUP BY
-//            department_name
-//     )
-// as supervisor_view
-// ON departments.department_name = supervisor_view.department_name;
 
-        var query = "SELECT departments.department_id, departments.department_name, departments.over_head_costs, products.product_name ";
-        query += "FROM departments LEFT JOIN products ON departments.department_name = products.department_name ";
-        // query += "ORDER BY products.product_sales" ; 
-        // ALTER TABLE Supervisor_View ADD total_profit ";
-        // query += "INSERT INTO Supervisor_View(total_profit, total_sales) SET (total_profit = departments.over_head_costs - products.product_sales, SUM(product_sales) FROM products GROUP BY department_name)  ";
+    for (var i = 0; i < res.length; i++) {
+      table.push(
+        [res[i].department_id, res[i].department_name, res[i].over_head_costs, res[i].product_sales, res[i].total_profit],
+      );
+    }
 
-        // var totalProfit = "over_head_costs - product_sales";
-        // department_id	department_name	over_head_costs	product_sales	total_profit
-        connection.query(query, function (err, res) {
-          // if (err) throw err;
-          console.log(res);
 
+    console.log(table.toString());
+    supervisor();
+  });
+}
+
+
+function newDepartment() {
+  
+    inquirer.prompt([{
+        name: "name",
+        type: "input",
+        message: "Please enter product name?"
+      },
+      {
+        name: "department",
+        type: "input",
+        message: "Please enter department name?"
+      },
+      {
+        name: "quantity",
+        type: "input",
+        message: "Please enter the product quantity?",
+        validate: function (value) {
+          if ((isNaN(value) === false) && (value > 0)) {
+            return true;
+          }
+          return false
+        }
+      },
+      {
+        name: "price",
+        type: "input",
+        message: "Please enter product price?",
+        validate: function (value) {
+          if ((isNaN(value) === false) && (value > 0)) {
+            return true;
+          }
+          return false
+        }
+      }
+    ]).then(function (val) {
+      var query = "INSERT INTO products SET ?";
+      console.log("Inserting new product...\n");
+      connection.query(query, {
+          product_name: val.name,
+          department_name: val.department,
+          price: val.price,
+          stock_quantity: val.quantity
+        },
+        function (err) {
+          if (err) throw err;
+          console.log("Success!");
           supervisor();
         });
-        //   SELECT Orders.OrderID, Customers.CustomerName
-        // FROM Orders
-        // INNER JOIN Customers ON Orders.CustomerID = Customers.CustomerID;
-      }
-
-
-
-
-//       addInventory();
-
-//       // When a supervisor selects View Product Sales by Department, the app should display a summarized table in their terminal/bash window. Use the table below as a guide.
-
-//       // department_id	department_name	over_head_costs	product_sales	total_profit
-//       // 01	Electronics	10000	20000	10000
-//       // 02	Clothing	60000	100000	40000
-//       // The total_profit column should be calculated on the fly using the difference between over_head_costs and product_sales. total_profit should not be stored in any database. You should use a custom alias.
-
-//       // If you can't get the table to display properly after a few hours, then feel free to go back and just add total_profit to the departments table.
-
-//       // Hint: You may need to look into aliases in MySQL.
-
-//       // Hint: You may need to look into GROUP BYs.
-
-//       // Hint: You may need to look into JOINS.
-
-//       // HINT: There may be an NPM package that can log the table to the console. What's is it? Good question :)
-
-//       // https://www.npmjs.com/package/cli-table
+    });
+  }
