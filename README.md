@@ -61,17 +61,15 @@ The tasks in the manager view are as follows:
 
    * over_head_costs (A dummy number you set for each department)
 
-2. I also went back and modified the products table so that there's a product_sales column and modified the `bamazonCustomer.js` app so that this value is updated with each individual products total revenue from each sale.
+2. I modified the database to add a new column to the products table: `product_sales`. I also updated the `bamazonCustomer.js` module so that when a customer purchases anything from the store, the price of the product multiplied by the quantity purchased is added to the product's product_sales column.
 
-3. I modified the `bamazonCustomer.js` app so that when a customer purchases anything from the store, the price of the product multiplied by the quantity purchased is added to the product's product_sales column.
-
-4. Running the Supervisor view, the application will list a set of menu options:
+3. Running the Supervisor view, the application will list a set of menu options:
 
    * View Product Sales by Department
    
    * Create New Department
 
-5. When a supervisor selects `View Product Sales by Department`, a table appears that is the result of an inner join query that links the products and departments table on the basis of `department_name`
-6. The `total_profit` column is calculated using the difference between `over_head_costs` and `product_sales`.
+4. When a supervisor selects `View Product Sales by Department`, a table appears that is the result of an inner join query that links the products and departments table on the basis of `department_name`
+5. The `total_profit` column is calculated using the difference between `over_head_costs` and `product_sales`.
 
 **Refer to the New-Department and Sales-by-Department files in this repo for a quick demo of these tasks**
