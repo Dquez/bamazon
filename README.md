@@ -15,6 +15,7 @@ I used MySql workbench to create the database as well as some initial products t
 * [inquirer](https://www.npmjs.com/package/inquirer)
 * [cli-table](https://www.npmjs.com/package/cli-table)
 * [mysql](https://www.npmjs.com/package/mysql)
+
 Running an npm install should install all of the dependencies you need to get this project started.
 
 
