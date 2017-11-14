@@ -51,7 +51,7 @@ var customer = {
           if (res[0].stock_quantity - val.quantity < 0) {
             console.log("Insufficient quantity! \n --------------\nThere are only " + res[0].stock_quantity + " of those left.");
 
-            customerSearch();
+            customer.customerSearch();
           } else {
             if (val.quantity == 1) {
               console.log("There is " + val.quantity + " " + res[0].product_name + " coming right up!");
