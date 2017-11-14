@@ -37,8 +37,6 @@ var supervisor = {
             });
     },
     productSalesByDept: function () {
-
-        var totalSales = 0;
         var query = "SELECT departments.department_id, departments.department_name, departments.over_head_costs, ";
         query += "SUM(products.product_sales) as 'product_sales', SUM(products.product_sales-departments.over_head_costs) total_profit ";
         query += "FROM products INNER JOIN departments USING (department_name) group by departments.department_id, ";
