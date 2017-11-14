@@ -22,45 +22,37 @@ Make sure you use the normal GitHub. Because this is a CLI App, there will be no
 
 ## Main tasks
 
-#### Customer View
+### Customer View
 
 1. First, I created a database with a table named `products`. I filled the table 5 rows, each with their own product name, department name, price and quantity *columns in the table*.
 2. All the items along with their IDs are shown. The user is then prompted to choose an ID and how many units of the product they'd like to purchase. The application then checks if your store has enough of the product to meet the customer's request.
 3. If there is enough product of the customer, the SQL database updates to reflect the remaining quantity and the user is told home much $ they spent.
 
+**Refer to Database-demo and Customer-Search files in this repo for the quick demostration of these tasks**
 
 
-### Challenge #2: Manager View (Next Level)
 
-* Create a new Node application called `bamazonManager.js`. Running this application will:
-
-  * List a set of menu options:
-
-    * View Products for Sale
+### Manager View
+The tasks in the manager view are as follows:
+    1. View Products for Sale
+    2. View Low Inventory
+    3. Add to Inventory
+    4. Add New Product
     
-    * View Low Inventory
-    
-    * Add to Inventory
-    
-    * Add New Product
+* If a manager selects `View Products for Sale`, the app lists every available item along with the item IDs, names, prices, and quantities.
 
-  * If a manager selects `View Products for Sale`, the app should list every available item: the item IDs, names, prices, and quantities.
+* If a manager selects `View Low Inventory`, the app lists all items with an inventory count lower than 20.
 
-  * If a manager selects `View Low Inventory`, then it should list all items with an inventory count lower than five.
+* If a manager selects `Add to Inventory`, the app displays a prompt that will let the manager "add more" of any item currently in the store.
 
-  * If a manager selects `Add to Inventory`, your app should display a prompt that will let the manager "add more" of any item currently in the store.
+* If a manager selects `Add New Product`, the manager can add a completely new product to the store.
 
-  * If a manager selects `Add New Product`, it should allow the manager to add a completely new product to the store.
+**Refer to the Products-&-Low-Inventory, Add-Inventory, and New-Product files in this repo for a quick demo of these tasks**
 
-- - -
 
-* If you finished Challenge #2 and put in all the hours you were willing to spend on this activity, then rest easy! Otherwise continue to the next and final challenge.
+### Supervisor View
 
-- - -
-
-### Challenge #3: Supervisor View (Final Level)
-
-1. Create a new MySQL table called `departments`. Your table should include the following columns:
+1. This is where I go back into the database to create a `departments` table. It includes the columns:
 
    * department_id
 
@@ -68,33 +60,17 @@ Make sure you use the normal GitHub. Because this is a CLI App, there will be no
 
    * over_head_costs (A dummy number you set for each department)
 
-2. Modify the products table so that there's a product_sales column and modify the `bamazonCustomer.js` app so that this value is updated with each individual products total revenue from each sale.
+2. I also went back and modified the products table so that there's a product_sales column and modified the `bamazonCustomer.js` app so that this value is updated with each individual products total revenue from each sale.
 
-3. Modify your `bamazonCustomer.js` app so that when a customer purchases anything from the store, the price of the product multiplied by the quantity purchased is added to the product's product_sales column.
+3. I modified the `bamazonCustomer.js` app so that when a customer purchases anything from the store, the price of the product multiplied by the quantity purchased is added to the product's product_sales column.
 
-   * Make sure your app still updates the inventory listed in the `products` column.
-
-4. Create another Node app called `bamazonSupervisor.js`. Running this application will list a set of menu options:
+4. Running the Supervisor view, the application will list a set of menu options:
 
    * View Product Sales by Department
    
    * Create New Department
 
-5. When a supervisor selects `View Product Sales by Department`, the app should display a summarized table in their terminal/bash window. Use the table below as a guide.
+5. When a supervisor selects `View Product Sales by Department`, a table appears that is the result of an inner join query that links the products and departments table on the basis of `department_name`
+6. The `total_profit` column is calculated using the difference between `over_head_costs` and `product_sales`.
 
-| department_id | department_name | over_head_costs | product_sales | total_profit |
-| ------------- | --------------- | --------------- | ------------- | ------------ |
-| 01            | Electronics     | 10000           | 20000         | 10000        |
-| 02            | Clothing        | 60000           | 100000        | 40000        |
-
-6. The `total_profit` column should be calculated on the fly using the difference between `over_head_costs` and `product_sales`. `total_profit` should not be stored in any database. You should use a custom alias.
-
-7. If you can't get the table to display properly after a few hours, then feel free to go back and just add `total_profit` to the `departments` table.
-
-   * Hint: You may need to look into aliases in MySQL.
-
-   * Hint: You may need to look into GROUP BYs.
-
-   * Hint: You may need to look into JOINS.
-
-   * **HINT**: There may be an NPM package that can log the table to the console. What's is it? Good question :)
+**Refer to the New-Department and Sales-by-Department files in this repo for a quick demo of these tasks**
