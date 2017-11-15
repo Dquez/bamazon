@@ -38,9 +38,9 @@ var supervisor = {
     },
     productSalesByDept: function () {
         var query = "SELECT departments.department_id, departments.department_name, departments.over_head_costs, ";
-        query += "SUM(products.product_sales) as 'product_sales', SUM(products.product_sales-departments.over_head_costs) total_profit ";
+        query += "SUM(products.product_sales) as 'product_sales', (SUM(products.product_sales)-departments.over_head_costs) as total_profit ";
         query += "FROM products INNER JOIN departments USING (department_name) group by departments.department_id, ";
-        query += " departments.over_head_costs, products.department_name";
+        query += "departments.over_head_costs, products.department_name";
         connection.query(query, function (err, res) {
             if (err) throw err;
             // instantiate 
