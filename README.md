@@ -18,9 +18,6 @@ I used MySql workbench to create the database as well as some initial products t
 
 Running an npm install should install all of the dependencies you need to get this project started.
 
-
-Make sure you use the normal GitHub. Because this is a CLI App, there will be no need to deploy it to Heroku. This time, though, you need to include screenshots, a gif, and/or a video showing us that you got the app working with no bugs. You can include these screenshots or a link to a video in a `README.md` file.
-
 ## Main tasks
 
 ### Customer View
